@@ -120,6 +120,53 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
     }
+      @media (max-width: 560px) {
+      body { padding: max(12px, env(safe-area-inset-top)) 12px max(24px, env(safe-area-inset-bottom)); overflow-x: hidden; }
+      .topline { align-items: flex-start; }
+      .brand { gap: 8px; font-size: .94rem; }
+      .brand-icon { width: 38px; height: 38px; border-radius: 12px; font-size: 20px; }
+      .grade { padding-top: 9px; font-size: .78rem; white-space: nowrap; }
+      .hero { margin: 20px auto 19px; }
+      .hero p { font-size: .96rem; }
+      .card { border-radius: 20px; }
+      .settings { align-items: stretch; gap: 15px; padding: 16px; }
+      .settings > div { flex: 1 1 100%; min-width: 0; }
+      .settings > .scoreboard { flex: 0 1 auto; }
+      .segmented { display: flex; flex-wrap: wrap; width: 100%; }
+      .segmented button { flex: 1 1 auto; min-height: 44px; padding: 9px 8px; font-size: .84rem; }
+      .settings > div:first-child .segmented button { flex: 1 1 calc(50% - 4px); }
+      .scoreboard { justify-content: flex-start; }
+      .score-chip { min-width: 78px; padding: 8px 10px; }
+      .exercise { padding: 21px 15px 24px; }
+      .progress-line { gap: 8px; margin-bottom: 19px; font-size: .78rem; }
+      .progress-track { max-width: none; min-width: 48px; }
+      .problem { font-size: clamp(1.65rem, 7vw, 2.2rem); overflow-wrap: anywhere; }
+      .answer-row { display: grid; grid-template-columns: minmax(0, 1fr) 66px; gap: 9px; margin-top: 23px; }
+      .answer-row input { grid-column: 1; width: 100%; min-height: 54px; padding: 12px; font-size: 1.15rem; }
+      .unit-target { grid-column: 2; min-width: 0; min-height: 54px; padding: 0 12px; }
+      .answer-row .primary { grid-column: 1 / -1; width: 100%; min-height: 50px; }
+      .hint-button, .secondary { min-height: 42px; }
+      .message, .hint { margin-top: 15px; padding: 13px 14px; }
+      .ladder { padding: 16px 11px 19px; gap: 6px; }
+      .ladder-items { gap: 6px; }
+      .unit { min-width: 44px; padding: 8px 7px; }
+      .arrow { font-size: .8rem; }
+      .history-card { margin-top: 13px; padding: 17px 14px; border-radius: 17px; }
+      .history-item { grid-template-columns: 1fr; gap: 5px; padding: 10px; }
+      .history-meta { text-align: left; }
+      .history-result { grid-column: auto; line-height: 1.4; }
+      .footer-note { padding: 0 5px; font-size: .78rem; }
+    }
+    @media (max-width: 380px) {
+      body { padding-left: 9px; padding-right: 9px; }
+      .grade { font-size: .72rem; }
+      .settings { padding: 13px; }
+      .exercise { padding-left: 12px; padding-right: 12px; }
+      .progress-line { font-size: .72rem; }
+      .problem { font-size: 1.55rem; }
+      .arrow { font-size: .72rem; }
+      .unit { min-width: 40px; }
+    }
   </style>
 </head>
 <body>

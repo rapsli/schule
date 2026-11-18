@@ -310,7 +310,7 @@
           showFeedback("try", "Fast! Versuch es noch einmal.", "Überlege, ob du durch 1000 teilen oder mit 1000 multiplizieren musst. <button type=\"button\" class=\"secondary\" id=\"solution-button\">Lösung ansehen</button>");
           document.getElementById("solution-button").addEventListener("click", () => {
             showFeedback("try", "So geht's:", equation + '. Korrigiere deine Antwort und probiere es nochmals.');
-            input.value = format(current.answer);
+            /* Die Antwort bleibt im Eingabefeld, damit die Lösung nicht automatisch gewertet wird. */
             input.focus();
           });
         }

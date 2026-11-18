@@ -91,6 +91,8 @@
     .arrow { color: #9aa3b9; font-weight: 900; }
     .footer-note { margin: 17px auto 0; max-width: 550px; text-align: center; color: #7a849d; font-size: .82rem; line-height: 1.5; }
     .ladder-items { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; width: 100%; padding-top: 12px; }
+    .sound-toggle { border: 1px solid var(--line); border-radius: 12px; background: #f8f9fd; color: #4f5d7b; min-height: 44px; padding: 8px 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+    .sound-toggle:hover { background: var(--blue-soft); color: var(--blue-dark); }
     .history-card { margin-top: 18px; padding: 21px 24px; border: 1px solid rgba(220,226,241,.85); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(43,58,107,.07); }
     .history-header h2 { margin: 0 0 4px; font-size: 1.15rem; letter-spacing: -.02em; }
     .history-header p { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.45; }
@@ -131,7 +133,8 @@
       .card { border-radius: 20px; }
       .settings { align-items: stretch; gap: 15px; padding: 16px; }
       .settings > div { flex: 1 1 100%; min-width: 0; }
-      .settings > .scoreboard { flex: 0 1 auto; }
+      .settings > .scoreboard { flex: 1 1 100%; align-items: center; }
+      .sound-toggle { margin-left: auto; }
       .segmented { display: flex; flex-wrap: wrap; width: 100%; }
       .segmented button { flex: 1 1 auto; min-height: 44px; padding: 9px 8px; font-size: .84rem; }
       .settings > div:first-child .segmented button { flex: 1 1 calc(50% - 4px); }
@@ -203,6 +206,7 @@
         <div class="scoreboard" aria-label="Dein Punktestand">
           <div class="score-chip"><span class="score-number" id="score">0</span><span class="score-caption">Punkte</span></div>
           <div class="score-chip"><span class="score-number" id="streak">0</span><span class="score-caption">Serie 🔥</span></div>
+          <button type="button" class="sound-toggle" id="sound-toggle" aria-pressed="true">🔊 Ton an</button>
         </div>
       </div>
 
@@ -297,6 +301,8 @@
       let round = 1;
       let history = [];
       let current = null;
+      let soundEnabled = true;
+      let audioContext = null;
 
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
@@ -305,16 +311,49 @@
           streak = Number.isFinite(saved.streak) ? saved.streak : 0;
           round = Number.isFinite(saved.round) ? saved.round : 1;
           history = Array.isArray(saved.history) ? saved.history.slice(0, 8) : [];
+          soundEnabled = saved.sound !== false;
         }
       } catch (_) {}
 
       const numberFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 3 });
       const format = (number) => numberFormat.format(Number(number.toFixed(6)));
       const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
+      const soundToggle = document.getElementById("sound-toggle");
+
+      function updateSoundToggle() {
+        soundToggle.textContent = soundEnabled ? "🔊 Ton an" : "🔇 Ton aus";
+        soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+        soundToggle.setAttribute("aria-label", soundEnabled ? "Töne ausschalten" : "Töne einschalten");
+      }
+
+      function playNotes(notes, gap = 0.12) {
+        if (!soundEnabled) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          audioContext = audioContext || new AudioContextClass();
+          if (audioContext.state === "suspended") audioContext.resume();
+          const startAt = audioContext.currentTime;
+          notes.forEach((frequency, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const start = startAt + index * gap;
+            oscillator.type = "sine";
+            oscillator.frequency.setValueAtTime(frequency, start);
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(0.035, start + 0.018);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.14);
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.start(start);
+            oscillator.stop(start + 0.15);
+          });
+        } catch (_) {}
+      }
 
       function saveState() {
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ score, streak, round, history }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ score, streak, round, history, sound: soundEnabled }));
         } catch (_) {}
       }
 
@@ -481,7 +520,8 @@
           scoreLabel.textContent = String(score);
           streakLabel.textContent = String(streak);
           recordAnswer(true, given);
-          showFeedback("good", "🎉 Genau richtig!", encouragement(), "Nächste Aufgabe");
+          showFeedback("good", "🎉 Genau richtig!", encouragement());
+          playNotes(streak === 10 ? [523, 659, 784, 1047] : streak === 5 ? [587, 740, 880] : streak === 3 ? [523, 659, 784] : [660, 880]);
           input.removeAttribute("aria-invalid");
           document.getElementById("check-button").textContent = "Weiter";
         } else {
@@ -489,6 +529,7 @@
           streakLabel.textContent = "0";
           input.setAttribute("aria-invalid", "true");
           recordAnswer(false, given);
+          playNotes([330, 247]);
           const category = current.category;
           const largerTarget = current.targetIndex > current.sourceIndex;
           const factor = category.stepFactor;
@@ -500,7 +541,10 @@
           showFeedback("try", gentleNudge(), "Überlege, ob du durch " + factor +
             " teilen oder mit " + factor + " multiplizieren musst. <button type=\"button\" class=\"secondary\" id=\"solution-button\">Lösung ansehen</button>");
           document.getElementById("solution-button").addEventListener("click", () => {
-            showFeedback("try", "So geht's:", equation + ". Vergleiche den Rechenweg mit deiner Antwort und probiere es nochmals.");
+            const task = format(current.sourceValue) + " " + category.units[current.sourceIndex].name +
+              " sind wie viele " + category.units[current.targetIndex].name + "?";
+            showFeedback("try", "So geht's:", "<strong>Aufgabe:</strong> " + task +
+              "<br><strong>Rechenweg:</strong> " + equation + ". Vergleiche den Rechenweg mit deiner Antwort und probiere es nochmals.");
             input.focus();
           });
           scoreLabel.textContent = String(score);
@@ -508,6 +552,12 @@
         saveState();
       });
 
+      soundToggle.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        updateSoundToggle();
+        saveState();
+        if (soundEnabled) playNotes([659]);
+      });
       document.getElementById("hint-button").addEventListener("click", showHint);
       document.getElementById("easy-mode").addEventListener("click", () => {
         if (easy) return;
@@ -533,6 +583,7 @@
 
       scoreLabel.textContent = String(score);
       streakLabel.textContent = String(streak);
+      updateSoundToggle();
       renderHistory();
       nextQuestion();
     })();

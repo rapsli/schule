@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7ff">
+  <title>Masseinheiten-Abenteuer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202747;
+      --muted: #65708c;
+      --blue: #4263eb;
+      --blue-dark: #304fca;
+      --blue-soft: #edf1ff;
+      --green: #21835a;
+      --green-soft: #e8f7ef;
+      --red: #b43d4d;
+      --red-soft: #fff0f0;
+      --paper: #ffffff;
+      --line: #e5e9f3;
+      --shadow: 0 18px 54px rgba(43, 58, 107, .12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 12% 4%, rgba(255, 209, 102, .28), transparent 27rem),
+        radial-gradient(ellipse at 94% 25%, rgba(137, 196, 255, .25), transparent 30rem),
+        #f4f7ff;
+      color: var(--ink);
+      font-family: ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
+      padding: 28px 18px 44px;
+    }
+    button, input { font: inherit; }
+    .page { width: min(760px, 100%); margin: 0 auto; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.02em; }
+    .brand-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; background: #fff; box-shadow: 0 5px 16px rgba(43,58,107,.10); font-size: 23px; }
+    .grade { color: var(--muted); font-size: .9rem; font-weight: 650; }
+    .hero { text-align: center; margin: 30px auto 25px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 7px; background: #fff; color: #516084; border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; font-size: .82rem; font-weight: 750; }
+    h1 { margin: 14px 0 8px; font-size: clamp(2rem, 7vw, 3.15rem); letter-spacing: -.055em; line-height: 1.04; }
+    .hero p { margin: 0; color: var(--muted); font-size: 1.05rem; }
+    .card { background: var(--paper); border: 1px solid rgba(220,226,241,.85); border-radius: 24px; box-shadow: var(--shadow); overflow: hidden; }
+    .settings { padding: 20px 24px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; }
+    .setting-label { display: block; font-size: .78rem; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .segmented { display: inline-flex; gap: 4px; padding: 4px; border-radius: 13px; background: #f2f4fa; }
+    .segmented button { border: 0; border-radius: 10px; background: transparent; color: #5d6781; padding: 9px 13px; cursor: pointer; font-weight: 750; }
+    .segmented button[aria-pressed="true"] { background: #fff; color: var(--blue-dark); box-shadow: 0 2px 7px rgba(33,43,77,.12); }
+    .scoreboard { display: flex; gap: 10px; }
+    .score-chip { min-width: 82px; padding: 8px 12px; border-radius: 13px; background: #f8f9fd; text-align: center; }
+    .score-number { display: block; font-size: 1.18rem; line-height: 1.2; font-weight: 850; }
+    .score-caption { color: var(--muted); font-size: .72rem; font-weight: 700; }
+    .exercise { padding: clamp(22px, 5vw, 38px); }
+    .progress-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 25px; color: var(--muted); font-size: .88rem; font-weight: 700; }
+    .progress-track { flex: 1; max-width: 155px; height: 8px; background: #edf0f7; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #7290ff, #4263eb); transition: width .25s ease; }
+    .question { text-align: center; }
+    .question-label { margin: 0 0 13px; color: var(--muted); font-weight: 650; }
+    .problem { margin: 0; font-size: clamp(1.7rem, 7vw, 2.55rem); font-weight: 850; letter-spacing: -.04em; line-height: 1.25; }
+    .problem .quantity { color: var(--blue-dark); white-space: nowrap; }
+    .answer-row { display: flex; align-items: stretch; justify-content: center; gap: 10px; margin: 28px auto 14px; width: min(420px, 100%); }
+    .answer-row input { width: 100%; min-width: 0; border: 2px solid #dce2f0; border-radius: 14px; padding: 15px 16px; color: var(--ink); background: #fff; font-size: 1.25rem; font-weight: 750; outline: none; transition: border .15s, box-shadow .15s; }
+    .answer-row input:focus { border-color: #7790f4; box-shadow: 0 0 0 4px rgba(66,99,235,.13); }
+    .answer-row input[aria-invalid="true"] { border-color: #d65d6c; }
+    .answer-row input::placeholder { color: #a0a8bb; font-weight: 500; }
+    .unit-target { display: grid; place-items: center; min-width: 73px; padding: 0 17px; border-radius: 14px; background: var(--blue-soft); color: var(--blue-dark); font-size: 1.2rem; font-weight: 850; }
+    .primary { border: 0; border-radius: 14px; padding: 15px 22px; background: var(--blue); color: #fff; font-weight: 800; cursor: pointer; box-shadow: 0 5px 13px rgba(66,99,235,.22); transition: transform .12s, background .12s; }
+    .primary:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .primary:active { transform: translateY(0); }
+    .primary:focus-visible, .secondary:focus-visible, .segmented button:focus-visible, .hint-button:focus-visible { outline: 3px solid #8da1ff; outline-offset: 3px; }
+    .answer-row .primary { white-space: nowrap; }
+    .help-actions { display: flex; justify-content: center; margin-top: 4px; }
+    .hint-button, .secondary { border: 0; background: transparent; color: var(--blue-dark); cursor: pointer; font-weight: 750; padding: 9px 12px; border-radius: 10px; }
+    .hint-button:hover, .secondary:hover { background: var(--blue-soft); }
+    .message { width: min(500px,100%); margin: 20px auto 0; border-radius: 15px; padding: 14px 16px; text-align: left; display: none; }
+    .message.show { display: block; }
+    .message.good { background: var(--green-soft); color: #176946; }
+    .message.try { background: var(--red-soft); color: #8f2e3b; }
+    .message-title { display: block; font-weight: 850; margin-bottom: 4px; }
+    .message-detail { font-size: .92rem; line-height: 1.5; }
+    .message .secondary { padding: 7px 9px; margin: 7px 0 -4px -8px; color: inherit; }
+    .hint { width: min(500px,100%); margin: 13px auto 0; padding: 15px 16px; border: 1px dashed #c9d3f0; border-radius: 15px; background: #f8f9ff; color: #4f5d7b; line-height: 1.55; display: none; }
+    .hint.show { display: block; }
+    .ladder { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 18px 15px 22px; border-top: 1px solid var(--line); background: #fbfcff; }
+    .ladder-label { width: 100%; text-align: center; color: var(--muted); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .unit { min-width: 54px; text-align: center; padding: 8px 10px; border-radius: 10px; background: #eef1f8; color: #58627b; font-weight: 800; }
+    .unit.active { background: #e5ebff; color: var(--blue-dark); box-shadow: inset 0 0 0 1px #cad5ff; }
+    .arrow { color: #9aa3b9; font-weight: 900; }
+    .footer-note { margin: 17px auto 0; max-width: 550px; text-align: center; color: #7a849d; font-size: .82rem; line-height: 1.5; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 560px) {
+      body { padding: 17px 12px 32px; }
+      .hero { margin-top: 23px; }
+      .settings { padding: 17px; }
+      .exercise { padding: 22px 17px 27px; }
+      .progress-line { margin-bottom: 21px; }
+      .answer-row { flex-wrap: wrap; }
+      .answer-row input { flex: 1 1 calc(100% - 90px); }
+      .unit-target { min-width: 70px; }
+      .answer-row .primary { width: 100%; }
+      .score-chip { min-width: 66px; padding: 7px 9px; }
+      .segmented button { padding: 9px 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topline">
+      <div class="brand"><span class="brand-icon" aria-hidden="true">⚖️</span><span>Massei-Mission</span></div>
+      <span class="grade">Mathe · 6. Klasse</span>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <span class="eyebrow"><span aria-hidden="true">✨</span> Üben und sicher werden</span>
+      <h1 id="page-title">Masseinheiten-Abenteuer</h1>
+      <p>Schaffst du die Umrechnungen?</p>
+    </section>
+
+    <section class="card" aria-label="Übungsbereich">
+      <div class="settings">
+        <div>
+          <span class="setting-label">Schwierigkeitsgrad</span>
+          <div class="segmented" role="group" aria-label="Schwierigkeitsgrad">
+            <button type="button" id="easy-mode" aria-pressed="true">g ↔ kg</button>
+            <button type="button" id="mixed-mode" aria-pressed="false">Alle Einheiten</button>
+          </div>
+        </div>
+        <div class="scoreboard" aria-label="Dein Punktestand">
+          <div class="score-chip"><span class="score-number" id="score">0</span><span class="score-caption">Punkte</span></div>
+          <div class="score-chip"><span class="score-number" id="streak">0</span><span class="score-caption">Serie 🔥</span></div>
+        </div>
+      </div>
+
+      <div class="exercise">
+        <div class="progress-line">
+          <span id="round-label">Aufgabe 1</span>
+          <div class="progress-track" role="progressbar" aria-label="Fortschritt zur nächsten Etappe" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <span id="milestone-label">0 / 10</span>
+        </div>
+
+        <div class="question">
+          <p class="question-label">Rechne um:</p>
+          <p class="problem" id="problem" aria-live="polite"></p>
+          <form id="answer-form" novalidate>
+            <label class="sr-only" for="answer">Deine Antwort</label>
+            <div class="answer-row">
+              <input id="answer" name="answer" type="text" inputmode="decimal" autocomplete="off" placeholder="Deine Antwort" aria-describedby="answer-help">
+              <span class="unit-target" id="target-unit" aria-hidden="true"></span>
+              <button class="primary" type="submit" id="check-button">Prüfen</button>
+            </div>
+            <span class="sr-only" id="answer-help">Gib eine Zahl ein. Du kannst Komma oder Punkt als Dezimalzeichen verwenden.</span>
+          </form>
+          <div class="help-actions"><button type="button" class="hint-button" id="hint-button">💡 Tipp anzeigen</button></div>
+          <div class="hint" id="hint" role="note"></div>
+          <div class="message" id="message" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="ladder" aria-label="Reihenfolge der Masseinheiten">
+        <span class="ladder-label">Die Einheiten-Leiter</span>
+        <span class="unit" data-unit="t">t</span><span class="arrow" aria-hidden="true">← 1000 →</span>
+        <span class="unit" data-unit="kg">kg</span><span class="arrow" aria-hidden="true">← 1000 →</span>
+        <span class="unit" data-unit="g">g</span><span class="arrow" aria-hidden="true">← 1000 →</span>
+        <span class="unit" data-unit="mg">mg</span>
+      </div>
+    </section>
+
+    <p class="footer-note">Merke: Ein Schritt zu einer kleineren Einheit bedeutet × 1000. Ein Schritt zu einer grösseren Einheit bedeutet ÷ 1000.</p>
+  </main>
+
+  <script>
+    (() => {
+      const units = [
+        { name: "mg", factor: 1 },
+        { name: "g", factor: 1000 },
+        { name: "kg", factor: 1000000 },
+        { name: "t", factor: 1000000000 }
+      ];
+      const upValues = [25, 75, 125, 250, 500, 750, 1000, 1250, 2500, 5000, 7500];
+      const downValues = [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125];
+
+      const form = document.getElementById("answer-form");
+      const input = document.getElementById("answer");
+      const problem = document.getElementById("problem");
+      const targetLabel = document.getElementById("target-unit");
+      const hint = document.getElementById("hint");
+      const message = document.getElementById("message");
+      const scoreLabel = document.getElementById("score");
+      const streakLabel = document.getElementById("streak");
+      const roundLabel = document.getElementById("round-label");
+      const milestoneLabel = document.getElementById("milestone-label");
+      const progressBar = document.querySelector(".progress-track");
+      const progressFill = document.getElementById("progress-fill");
+      const ladderUnits = [...document.querySelectorAll(".unit[data-unit]")];
+
+      let mode = "easy";
+      let score = 0;
+      let streak = 0;
+      let round = 1;
+      let current = null;
+
+      const numberFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 3 });
+      const format = (number) => numberFormat.format(Number(number.toFixed(6)));
+      const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
+
+      function nextQuestion() {
+        const firstPair = mode === "easy" ? 1 : Math.floor(Math.random() * 3);
+        const direction = Math.random() < 0.5 ? -1 : 1;
+        const sourceIndex = direction < 0 ? firstPair + 1 : firstPair;
+        const targetIndex = direction < 0 ? firstPair : firstPair + 1;
+        const sourceValue = direction > 0 ? randomItem(upValues) : randomItem(downValues);
+        const answer = sourceValue * units[sourceIndex].factor / units[targetIndex].factor;
+
+        current = {
+          sourceValue,
+          sourceIndex,
+          targetIndex,
+          answer: Number(answer.toFixed(6))
+        };
+
+        problem.innerHTML = '<span class="quantity">' + format(sourceValue) + ' ' + units[sourceIndex].name + '</span> sind wie viele <span class="quantity">' + units[targetIndex].name + '</span>?';
+        targetLabel.textContent = units[targetIndex].name;
+        input.value = "";
+        input.removeAttribute("aria-invalid");
+        message.className = "message";
+        message.textContent = "";
+        hint.className = "hint";
+        hint.textContent = "";
+        document.getElementById("hint-button").textContent = "💡 Tipp anzeigen";
+        document.getElementById("check-button").textContent = "Prüfen";
+        roundLabel.textContent = "Aufgabe " + round;
+        milestoneLabel.textContent = (round - 1) % 10 + " / 10";
+        const progress = ((round - 1) % 10) * 10;
+        progressFill.style.width = progress + "%";
+        progressBar.setAttribute("aria-valuenow", String(progress));
+        ladderUnits.forEach((el) => el.classList.toggle("active", el.dataset.unit === units[sourceIndex].name || el.dataset.unit === units[targetIndex].name));
+        window.setTimeout(() => input.focus(), 0);
+      }
+
+      function showHint() {
+        if (hint.classList.contains("show")) {
+          hint.classList.remove("show");
+          document.getElementById("hint-button").textContent = "💡 Tipp anzeigen";
+          return;
+        }
+        const from = current.sourceIndex;
+        const to = current.targetIndex;
+        const steps = Math.abs(to - from);
+        const biggerDirection = to > from;
+        const action = biggerDirection ? "durch 1000 teilen" : "mit 1000 multiplizieren";
+        const arrow = biggerDirection ? "←" : "→";
+        hint.innerHTML = 'Zwischen <strong>' + units[from].name + '</strong> und <strong>' + units[to].name + '</strong> liegt ' + (steps === 1 ? 'ein Schritt' : steps + ' Schritte') + ' auf der Leiter. Geh ' + (biggerDirection ? 'nach links' : 'nach rechts') + ' (' + arrow + '). Du musst deshalb ' + action + '.';
+        hint.classList.add("show");
+        document.getElementById("hint-button").textContent = "Tipp schliessen";
+      }
+
+      function parseAnswer(value) {
+        const normalized = value.trim().replace(/\s/g, "").replace(/'/g, "").replace(",", ".");
+        if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(normalized)) return NaN;
+        return Number(normalized);
+      }
+
+      function showFeedback(kind, title, detail, buttonText) {
+        message.className = "message show " + kind;
+        message.innerHTML = '<span class="message-title">' + title + '</span><div class="message-detail">' + detail + '</div>' +
+          (buttonText ? '<button type="button" class="secondary" id="next-button">' + buttonText + ' →</button>' : '');
+        const nextButton = document.getElementById("next-button");
+        if (nextButton) nextButton.addEventListener("click", nextQuestion);
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!current) return;
+        const given = parseAnswer(input.value);
+        if (!Number.isFinite(given)) {
+          input.setAttribute("aria-invalid", "true");
+          input.focus();
+          showFeedback("try", "Gib zuerst eine Zahl ein.", "Du kannst ein Komma oder einen Punkt als Dezimalzeichen verwenden.");
+          return;
+        }
+
+        const correct = Math.abs(given - current.answer) < 0.000001;
+        if (correct) {
+          score += 1;
+          streak += 1;
+          round += 1;
+          scoreLabel.textContent = String(score);
+          streakLabel.textContent = String(streak);
+          const detail = streak > 1 ? "Richtig! Schon " + streak + " richtige Antworten hintereinander." : "Richtig umgerechnet!";
+          showFeedback("good", "🎉 Genau richtig!", detail, "Nächste Aufgabe");
+          input.removeAttribute("aria-invalid");
+          document.getElementById("check-button").textContent = "Weiter";
+        } else {
+          streak = 0;
+          streakLabel.textContent = "0";
+          input.setAttribute("aria-invalid", "true");
+          const bigger = current.targetIndex > current.sourceIndex;
+          const factor = 1000;
+          const equation = bigger
+            ? format(current.sourceValue) + " " + units[current.sourceIndex].name + " ÷ " + factor + " = " + format(current.answer) + " " + units[current.targetIndex].name
+            : format(current.sourceValue) + " " + units[current.sourceIndex].name + " × " + factor + " = " + format(current.answer) + " " + units[current.targetIndex].name;
+          showFeedback("try", "Fast! Versuch es noch einmal.", "Überlege, ob du durch 1000 teilen oder mit 1000 multiplizieren musst. <button type=\"button\" class=\"secondary\" id=\"solution-button\">Lösung ansehen</button>");
+          document.getElementById("solution-button").addEventListener("click", () => {
+            showFeedback("try", "So geht's:", equation + '. Korrigiere deine Antwort und probiere es nochmals.');
+            input.value = format(current.answer);
+            input.focus();
+          });
+        }
+      });
+
+      document.getElementById("hint-button").addEventListener("click", showHint);
+      document.getElementById("easy-mode").addEventListener("click", () => {
+        if (mode === "easy") return;
+        mode = "easy";
+        document.getElementById("easy-mode").setAttribute("aria-pressed", "true");
+        document.getElementById("mixed-mode").setAttribute("aria-pressed", "false");
+        nextQuestion();
+      });
+      document.getElementById("mixed-mode").addEventListener("click", () => {
+        if (mode === "mixed") return;
+        mode = "mixed";
+        document.getElementById("easy-mode").setAttribute("aria-pressed", "false");
+        document.getElementById("mixed-mode").setAttribute("aria-pressed", "true");
+        nextQuestion();
+      });
+
+      nextQuestion();
+    })();
+  </script>
+</body>
+</html>

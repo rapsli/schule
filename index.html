@@ -260,22 +260,16 @@
           label: "Gewichtsmass",
           stepFactor: 1000,
           units: [{ name: "mg", factor: 1 }, { name: "g", factor: 1000 }, { name: "kg", factor: 1000000 }, { name: "t", factor: 1000000000 }],
-          smallerValues: [25, 75, 125, 250, 500, 750, 1000, 1250, 2500, 5000, 7500],
-          largerValues: [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125]
         },
         volume: {
           label: "Hohlmass",
           stepFactor: 10,
           units: [{ name: "ml", factor: 1 }, { name: "cl", factor: 10 }, { name: "dl", factor: 100 }, { name: "l", factor: 1000 }],
-          smallerValues: [5, 10, 25, 50, 75, 100, 125, 250, 500, 750, 1250],
-          largerValues: [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125]
         },
         length: {
           label: "Längenmass",
           stepFactor: 10,
           units: [{ name: "mm", factor: 1 }, { name: "cm", factor: 10 }, { name: "dm", factor: 100 }, { name: "m", factor: 1000 }],
-          smallerValues: [5, 10, 25, 50, 75, 100, 125, 250, 500, 750, 1250],
-          largerValues: [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125]
         }
       };
       const STORAGE_KEY = "einheiten-abenteuer-v1";
@@ -318,6 +312,19 @@
       const numberFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 3 });
       const format = (number) => numberFormat.format(Number(number.toFixed(6)));
       const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
+
+      function randomAmount(category, direction) {
+        if (direction > 0) {
+          const maximum = category.stepFactor === 1000 ? 99999 : 9999;
+          return Math.floor(Math.random() * (maximum - 1)) + 2;
+        }
+        const decimalPlaces = randomItem([0, 0, 1, 1, 2, 2, 3]);
+        const scale = Math.pow(10, decimalPlaces);
+        const minimum = Math.ceil(0.1 * scale);
+        const maximum = 250 * scale;
+        const scaledValue = Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
+        return Number((scaledValue / scale).toFixed(decimalPlaces));
+      }
       const soundToggle = document.getElementById("sound-toggle");
 
       function updateSoundToggle() {
@@ -412,14 +419,27 @@
       }
 
       function nextQuestion() {
-        const categoryKey = selectedDimension === "all" ? randomItem(Object.keys(dimensions)) : selectedDimension;
-        const category = dimensions[categoryKey];
-        const pairIndex = easy ? 1 : Math.floor(Math.random() * (category.units.length - 1));
-        const direction = Math.random() < 0.5 ? -1 : 1;
-        const sourceIndex = direction < 0 ? pairIndex + 1 : pairIndex;
-        const targetIndex = direction < 0 ? pairIndex : pairIndex + 1;
-        const sourceValue = direction > 0 ? randomItem(category.smallerValues) : randomItem(category.largerValues);
-        const answer = sourceValue * category.units[sourceIndex].factor / category.units[targetIndex].factor;
+        let categoryKey;
+        let category;
+        let pairIndex;
+        let direction;
+        let sourceIndex;
+        let targetIndex;
+        let sourceValue;
+        let answer;
+        let questionKey;
+        for (let attempt = 0; attempt < 20; attempt++) {
+          categoryKey = selectedDimension === "all" ? randomItem(Object.keys(dimensions)) : selectedDimension;
+          category = dimensions[categoryKey];
+          pairIndex = easy ? 1 : Math.floor(Math.random() * (category.units.length - 1));
+          direction = Math.random() < 0.5 ? -1 : 1;
+          sourceIndex = direction < 0 ? pairIndex + 1 : pairIndex;
+          targetIndex = direction < 0 ? pairIndex : pairIndex + 1;
+          sourceValue = randomAmount(category, direction);
+          answer = sourceValue * category.units[sourceIndex].factor / category.units[targetIndex].factor;
+          questionKey = format(sourceValue) + " " + category.units[sourceIndex].name + " → " + category.units[targetIndex].name;
+          if (!history.some((item) => item.question === questionKey)) break;
+        }
         current = { category, sourceValue, sourceIndex, targetIndex, answer: Number(answer.toFixed(6)), solved: false };
 
         problem.textContent = format(sourceValue) + " " + category.units[sourceIndex].name +

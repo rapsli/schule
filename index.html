@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7ff">
-  <title>Masseinheiten-Abenteuer</title>
+  <title>Einheiten-Abenteuer</title>
   <style>
     :root {
       color-scheme: light;
@@ -90,6 +90,19 @@
     .unit.active { background: #e5ebff; color: var(--blue-dark); box-shadow: inset 0 0 0 1px #cad5ff; }
     .arrow { color: #9aa3b9; font-weight: 900; }
     .footer-note { margin: 17px auto 0; max-width: 550px; text-align: center; color: #7a849d; font-size: .82rem; line-height: 1.5; }
+    .ladder-items { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; width: 100%; padding-top: 12px; }
+    .history-card { margin-top: 18px; padding: 21px 24px; border: 1px solid rgba(220,226,241,.85); border-radius: 20px; background: #fff; box-shadow: 0 10px 28px rgba(43,58,107,.07); }
+    .history-header h2 { margin: 0 0 4px; font-size: 1.15rem; letter-spacing: -.02em; }
+    .history-header p { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.45; }
+    .history-list { list-style: none; padding: 0; margin: 15px 0 0; display: grid; gap: 8px; }
+    .history-item { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 14px; align-items: center; padding: 10px 12px; border-radius: 12px; background: #f8f9fd; }
+    .history-question { font-weight: 700; color: #424c68; }
+    .history-meta { color: var(--muted); font-size: .76rem; text-align: right; }
+    .history-result { grid-column: 1 / -1; font-size: .82rem; font-weight: 800; }
+    .history-result.correct { color: var(--green); }
+    .history-result.try { color: #8f6570; }
+    .history-empty { color: var(--muted); font-size: .9rem; padding: 13px; background: #f8f9fd; border-radius: 12px; }
+    @media (max-width: 560px) { .history-card { padding: 18px 15px; } .history-item { grid-template-columns: 1fr; } .history-meta { text-align: left; } }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     @media (max-width: 560px) {
       body { padding: 17px 12px 32px; }
@@ -112,23 +125,32 @@
 <body>
   <main class="page">
     <header class="topline">
-      <div class="brand"><span class="brand-icon" aria-hidden="true">⚖️</span><span>Massei-Mission</span></div>
+      <div class="brand"><span class="brand-icon" aria-hidden="true">📏</span><span>Einheiten-Mission</span></div>
       <span class="grade">Mathe · 6. Klasse</span>
     </header>
 
     <section class="hero" aria-labelledby="page-title">
       <span class="eyebrow"><span aria-hidden="true">✨</span> Üben und sicher werden</span>
-      <h1 id="page-title">Masseinheiten-Abenteuer</h1>
-      <p>Schaffst du die Umrechnungen?</p>
+      <h1 id="page-title">Einheiten-Abenteuer</h1>
+      <p>Gewicht, Hohlmass und Längen – schaffst du die Umrechnungen?</p>
     </section>
 
     <section class="card" aria-label="Übungsbereich">
       <div class="settings">
         <div>
-          <span class="setting-label">Schwierigkeitsgrad</span>
+          <span class="setting-label">Welche Masse?</span>
+          <div class="segmented" role="group" aria-label="Einheitenbereich">
+            <button type="button" class="dimension-button" data-dimension="length" aria-pressed="false">Längenmass</button>
+            <button type="button" class="dimension-button" data-dimension="volume" aria-pressed="false">Hohlmass</button>
+            <button type="button" class="dimension-button" data-dimension="mass" aria-pressed="true">Gewichtsmass</button>
+            <button type="button" class="dimension-button" data-dimension="all" aria-pressed="false">Bunt gemischt</button>
+          </div>
+        </div>
+        <div>
+          <span class="setting-label">Niveau</span>
           <div class="segmented" role="group" aria-label="Schwierigkeitsgrad">
-            <button type="button" id="easy-mode" aria-pressed="true">g ↔ kg</button>
-            <button type="button" id="mixed-mode" aria-pressed="false">Alle Einheiten</button>
+            <button type="button" id="easy-mode" aria-pressed="true">Leicht</button>
+            <button type="button" id="mixed-mode" aria-pressed="false">Alle Paare</button>
           </div>
         </div>
         <div class="scoreboard" aria-label="Dein Punktestand">
@@ -164,29 +186,48 @@
         </div>
       </div>
 
-      <div class="ladder" aria-label="Reihenfolge der Masseinheiten">
+      <div class="ladder" id="ladder" aria-label="Reihenfolge der Einheiten">
         <span class="ladder-label">Die Einheiten-Leiter</span>
-        <span class="unit" data-unit="t">t</span><span class="arrow" aria-hidden="true">← 1000 →</span>
-        <span class="unit" data-unit="kg">kg</span><span class="arrow" aria-hidden="true">← 1000 →</span>
-        <span class="unit" data-unit="g">g</span><span class="arrow" aria-hidden="true">← 1000 →</span>
-        <span class="unit" data-unit="mg">mg</span>
+        <div class="ladder-items" id="ladder-items"></div>
       </div>
     </section>
 
-    <p class="footer-note">Merke: Ein Schritt zu einer kleineren Einheit bedeutet × 1000. Ein Schritt zu einer grösseren Einheit bedeutet ÷ 1000.</p>
+    <section class="history-card" aria-labelledby="history-title">
+      <div class="history-header">
+        <div><h2 id="history-title">Dein Verlauf</h2><p>Deine Punkte und letzten Antworten bleiben auf diesem Gerät gespeichert.</p></div>
+      </div>
+      <ol class="history-list" id="history-list" aria-live="polite"></ol>
+    </section>
+
+    <p class="footer-note">Merke: Zu einer kleineren Einheit rechnest du mit dem Faktor mal, zu einer grösseren teilst du. Bei Gewichtsmassen ist der Faktor 1000, bei Hohl- und Längenmassen 10.</p>
   </main>
 
   <script>
     (() => {
-      const units = [
-        { name: "mg", factor: 1 },
-        { name: "g", factor: 1000 },
-        { name: "kg", factor: 1000000 },
-        { name: "t", factor: 1000000000 }
-      ];
-      const upValues = [25, 75, 125, 250, 500, 750, 1000, 1250, 2500, 5000, 7500];
-      const downValues = [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125];
-
+      const dimensions = {
+        mass: {
+          label: "Gewichtsmass",
+          stepFactor: 1000,
+          units: [{ name: "mg", factor: 1 }, { name: "g", factor: 1000 }, { name: "kg", factor: 1000000 }, { name: "t", factor: 1000000000 }],
+          smallerValues: [25, 75, 125, 250, 500, 750, 1000, 1250, 2500, 5000, 7500],
+          largerValues: [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125]
+        },
+        volume: {
+          label: "Hohlmass",
+          stepFactor: 10,
+          units: [{ name: "ml", factor: 1 }, { name: "cl", factor: 10 }, { name: "dl", factor: 100 }, { name: "l", factor: 1000 }],
+          smallerValues: [5, 10, 25, 50, 75, 100, 125, 250, 500, 750, 1250],
+          largerValues: [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125]
+        },
+        length: {
+          label: "Längenmass",
+          stepFactor: 10,
+          units: [{ name: "mm", factor: 1 }, { name: "cm", factor: 10 }, { name: "dm", factor: 100 }, { name: "m", factor: 1000 }],
+          smallerValues: [5, 10, 25, 50, 75, 100, 125, 250, 500, 750, 1250],
+          largerValues: [0.25, 0.5, 0.75, 1.2, 1.5, 2.5, 4, 7.5, 12.5, 25, 125]
+        }
+      };
+      const STORAGE_KEY = "einheiten-abenteuer-v1";
       const form = document.getElementById("answer-form");
       const input = document.getElementById("answer");
       const problem = document.getElementById("problem");
@@ -199,35 +240,105 @@
       const milestoneLabel = document.getElementById("milestone-label");
       const progressBar = document.querySelector(".progress-track");
       const progressFill = document.getElementById("progress-fill");
-      const ladderUnits = [...document.querySelectorAll(".unit[data-unit]")];
-
-      let mode = "easy";
+      const ladder = document.getElementById("ladder-items");
+      const historyList = document.getElementById("history-list");
+      const dimensionButtons = [...document.querySelectorAll(".dimension-button")];
+      let selectedDimension = "mass";
+      let easy = true;
       let score = 0;
       let streak = 0;
       let round = 1;
+      let history = [];
       let current = null;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && typeof saved === "object") {
+          score = Number.isFinite(saved.score) ? saved.score : 0;
+          streak = Number.isFinite(saved.streak) ? saved.streak : 0;
+          round = Number.isFinite(saved.round) ? saved.round : 1;
+          history = Array.isArray(saved.history) ? saved.history.slice(0, 8) : [];
+        }
+      } catch (_) {}
 
       const numberFormat = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 3 });
       const format = (number) => numberFormat.format(Number(number.toFixed(6)));
       const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
 
-      function nextQuestion() {
-        const firstPair = mode === "easy" ? 1 : Math.floor(Math.random() * 3);
-        const direction = Math.random() < 0.5 ? -1 : 1;
-        const sourceIndex = direction < 0 ? firstPair + 1 : firstPair;
-        const targetIndex = direction < 0 ? firstPair : firstPair + 1;
-        const sourceValue = direction > 0 ? randomItem(upValues) : randomItem(downValues);
-        const answer = sourceValue * units[sourceIndex].factor / units[targetIndex].factor;
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ score, streak, round, history }));
+        } catch (_) {}
+      }
 
-        current = {
-          sourceValue,
-          sourceIndex,
-          targetIndex,
-          answer: Number(answer.toFixed(6))
+      function renderHistory() {
+        historyList.replaceChildren();
+        if (!history.length) {
+          const empty = document.createElement("li");
+          empty.className = "history-empty";
+          empty.textContent = "Noch keine Antworten. Los geht's! 🚀";
+          historyList.appendChild(empty);
+          return;
+        }
+        history.forEach((item) => {
+          const row = document.createElement("li");
+          row.className = "history-item";
+          const question = document.createElement("span");
+          question.className = "history-question";
+          question.textContent = item.question;
+          const meta = document.createElement("span");
+          meta.className = "history-meta";
+          meta.textContent = item.when;
+          const result = document.createElement("span");
+          result.className = "history-result " + (item.correct ? "correct" : "try");
+          result.textContent = item.correct
+            ? "✓ Richtig · +1 Punkt (Antwort: " + item.answer + ")"
+            : "↻ Noch ein Versuch · deine Antwort: " + item.answer;
+          row.append(question, meta, result);
+          historyList.appendChild(row);
+        });
+      }
+
+      function recordAnswer(correct, answer) {
+        const item = {
+          question: format(current.sourceValue) + " " + current.category.units[current.sourceIndex].name +
+            " → " + current.category.units[current.targetIndex].name,
+          answer: format(answer),
+          correct,
+          when: new Date().toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" })
         };
+        history.unshift(item);
+        history = history.slice(0, 8);
+        saveState();
+        renderHistory();
+      }
 
-        problem.innerHTML = '<span class="quantity">' + format(sourceValue) + ' ' + units[sourceIndex].name + '</span> sind wie viele <span class="quantity">' + units[targetIndex].name + '</span>?';
-        targetLabel.textContent = units[targetIndex].name;
+      function renderLadder(category, sourceUnit, targetUnit) {
+        const descending = [...category.units].reverse();
+        ladder.innerHTML = descending.map((unit, index) => {
+          const active = unit.name === sourceUnit || unit.name === targetUnit ? " active" : "";
+          const unitHtml = '<span class="unit' + active + '">' + unit.name + '</span>';
+          const arrow = index < descending.length - 1
+            ? '<span class="arrow" aria-hidden="true">← ' + category.stepFactor + ' →</span>'
+            : "";
+          return unitHtml + arrow;
+        }).join("");
+      }
+
+      function nextQuestion() {
+        const categoryKey = selectedDimension === "all" ? randomItem(Object.keys(dimensions)) : selectedDimension;
+        const category = dimensions[categoryKey];
+        const pairIndex = easy ? 1 : Math.floor(Math.random() * (category.units.length - 1));
+        const direction = Math.random() < 0.5 ? -1 : 1;
+        const sourceIndex = direction < 0 ? pairIndex + 1 : pairIndex;
+        const targetIndex = direction < 0 ? pairIndex : pairIndex + 1;
+        const sourceValue = direction > 0 ? randomItem(category.smallerValues) : randomItem(category.largerValues);
+        const answer = sourceValue * category.units[sourceIndex].factor / category.units[targetIndex].factor;
+        current = { category, sourceValue, sourceIndex, targetIndex, answer: Number(answer.toFixed(6)), solved: false };
+
+        problem.textContent = format(sourceValue) + " " + category.units[sourceIndex].name +
+          " sind wie viele " + category.units[targetIndex].name + "?";
+        targetLabel.textContent = category.units[targetIndex].name;
         input.value = "";
         input.removeAttribute("aria-invalid");
         message.className = "message";
@@ -241,7 +352,7 @@
         const progress = ((round - 1) % 10) * 10;
         progressFill.style.width = progress + "%";
         progressBar.setAttribute("aria-valuenow", String(progress));
-        ladderUnits.forEach((el) => el.classList.toggle("active", el.dataset.unit === units[sourceIndex].name || el.dataset.unit === units[targetIndex].name));
+        renderLadder(category, category.units[sourceIndex].name, category.units[targetIndex].name);
         window.setTimeout(() => input.focus(), 0);
       }
 
@@ -251,13 +362,13 @@
           document.getElementById("hint-button").textContent = "💡 Tipp anzeigen";
           return;
         }
-        const from = current.sourceIndex;
-        const to = current.targetIndex;
-        const steps = Math.abs(to - from);
-        const biggerDirection = to > from;
-        const action = biggerDirection ? "durch 1000 teilen" : "mit 1000 multiplizieren";
-        const arrow = biggerDirection ? "←" : "→";
-        hint.innerHTML = 'Zwischen <strong>' + units[from].name + '</strong> und <strong>' + units[to].name + '</strong> liegt ' + (steps === 1 ? 'ein Schritt' : steps + ' Schritte') + ' auf der Leiter. Geh ' + (biggerDirection ? 'nach links' : 'nach rechts') + ' (' + arrow + '). Du musst deshalb ' + action + '.';
+        const bigger = current.targetIndex > current.sourceIndex;
+        const action = bigger
+          ? "durch " + current.category.stepFactor + " teilen"
+          : "mit " + current.category.stepFactor + " multiplizieren";
+        hint.textContent = "Zwischen " + current.category.units[current.sourceIndex].name + " und " +
+          current.category.units[current.targetIndex].name + " liegt ein Schritt auf der Leiter. Geh " +
+          (bigger ? "nach links (←)" : "nach rechts (→)") + ". Du musst deshalb " + action + ".";
         hint.classList.add("show");
         document.getElementById("hint-button").textContent = "Tipp schliessen";
       }
@@ -271,14 +382,42 @@
       function showFeedback(kind, title, detail, buttonText) {
         message.className = "message show " + kind;
         message.innerHTML = '<span class="message-title">' + title + '</span><div class="message-detail">' + detail + '</div>' +
-          (buttonText ? '<button type="button" class="secondary" id="next-button">' + buttonText + ' →</button>' : '');
+          (buttonText ? '<button type="button" class="secondary" id="next-button">' + buttonText + ' →</button>' : "");
         const nextButton = document.getElementById("next-button");
         if (nextButton) nextButton.addEventListener("click", nextQuestion);
+      }
+
+      function encouragement() {
+        const milestone = {
+          3: ["Drei Richtige! Dein Zahlenhirn macht einen Freudentanz! 💃", "Dreier-Serie! Sogar die Nullen staunen. 😄"],
+          5: ["Fünf am Stück! Du bist heute das Umrechnungs-Ass! 🏅", "Wow, fünf Richtige! Die Einheiten-Leiter wackelt vor Applaus. 👏"],
+          10: ["Zehn in Folge! Das ist Einheiten-Magie! ✨", "Zehn Richtige! Zeit für einen Sieger*innen-Tanz! 🥳"]
+        };
+        if (milestone[streak]) return randomItem(milestone[streak]);
+        return randomItem([
+          "Richtig umgerechnet! Weiter so! 🌟",
+          "Genau! Die Einheiten-Leiter kann sich auf dich verlassen. 😊",
+          "Yes! Diese Umrechnung sitzt. 💛"
+        ]);
+      }
+
+      function gentleNudge() {
+        return randomItem([
+          "Hoppla, die Zahl ist wohl eine Stufe verrutscht. Das passiert – probier's nochmals. 🌱",
+          "Ach, die Nullen haben Verstecken gespielt. Schau noch einmal auf den Faktor. 🙈",
+          "Oh je, die Antwort hat sich verirrt. Wir lotsen sie gemeinsam zurück. 🧭",
+          "Fast! Auch Mathe-Mäuse brauchen manchmal einen zweiten Anlauf. 🐭",
+          "Nicht schlimm – du bist am Üben. Ein kleiner Rechenschritt hilft weiter. 💛"
+        ]);
       }
 
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         if (!current) return;
+        if (current.solved) {
+          nextQuestion();
+          return;
+        }
         const given = parseAnswer(input.value);
         if (!Number.isFinite(given)) {
           input.setAttribute("aria-invalid", "true");
@@ -287,51 +426,67 @@
           return;
         }
 
-        const correct = Math.abs(given - current.answer) < 0.000001;
-        if (correct) {
+        if (Math.abs(given - current.answer) < 0.000001) {
+          current.solved = true;
           score += 1;
           streak += 1;
           round += 1;
           scoreLabel.textContent = String(score);
           streakLabel.textContent = String(streak);
-          const detail = streak > 1 ? "Richtig! Schon " + streak + " richtige Antworten hintereinander." : "Richtig umgerechnet!";
-          showFeedback("good", "🎉 Genau richtig!", detail, "Nächste Aufgabe");
+          recordAnswer(true, given);
+          showFeedback("good", "🎉 Genau richtig!", encouragement(), "Nächste Aufgabe");
           input.removeAttribute("aria-invalid");
           document.getElementById("check-button").textContent = "Weiter";
         } else {
           streak = 0;
           streakLabel.textContent = "0";
           input.setAttribute("aria-invalid", "true");
-          const bigger = current.targetIndex > current.sourceIndex;
-          const factor = 1000;
-          const equation = bigger
-            ? format(current.sourceValue) + " " + units[current.sourceIndex].name + " ÷ " + factor + " = " + format(current.answer) + " " + units[current.targetIndex].name
-            : format(current.sourceValue) + " " + units[current.sourceIndex].name + " × " + factor + " = " + format(current.answer) + " " + units[current.targetIndex].name;
-          showFeedback("try", "Fast! Versuch es noch einmal.", "Überlege, ob du durch 1000 teilen oder mit 1000 multiplizieren musst. <button type=\"button\" class=\"secondary\" id=\"solution-button\">Lösung ansehen</button>");
+          recordAnswer(false, given);
+          const category = current.category;
+          const largerTarget = current.targetIndex > current.sourceIndex;
+          const factor = category.stepFactor;
+          const equation = largerTarget
+            ? format(current.sourceValue) + " " + category.units[current.sourceIndex].name + " ÷ " + factor +
+              " = " + format(current.answer) + " " + category.units[current.targetIndex].name
+            : format(current.sourceValue) + " " + category.units[current.sourceIndex].name + " × " + factor +
+              " = " + format(current.answer) + " " + category.units[current.targetIndex].name;
+          showFeedback("try", gentleNudge(), "Überlege, ob du durch " + factor +
+            " teilen oder mit " + factor + " multiplizieren musst. <button type=\"button\" class=\"secondary\" id=\"solution-button\">Lösung ansehen</button>");
           document.getElementById("solution-button").addEventListener("click", () => {
-            showFeedback("try", "So geht's:", equation + '. Korrigiere deine Antwort und probiere es nochmals.');
-            /* Die Antwort bleibt im Eingabefeld, damit die Lösung nicht automatisch gewertet wird. */
+            showFeedback("try", "So geht's:", equation + ". Vergleiche den Rechenweg mit deiner Antwort und probiere es nochmals.");
             input.focus();
           });
+          scoreLabel.textContent = String(score);
         }
+        saveState();
       });
 
       document.getElementById("hint-button").addEventListener("click", showHint);
       document.getElementById("easy-mode").addEventListener("click", () => {
-        if (mode === "easy") return;
-        mode = "easy";
+        if (easy) return;
+        easy = true;
         document.getElementById("easy-mode").setAttribute("aria-pressed", "true");
         document.getElementById("mixed-mode").setAttribute("aria-pressed", "false");
         nextQuestion();
       });
       document.getElementById("mixed-mode").addEventListener("click", () => {
-        if (mode === "mixed") return;
-        mode = "mixed";
+        if (!easy) return;
+        easy = false;
         document.getElementById("easy-mode").setAttribute("aria-pressed", "false");
         document.getElementById("mixed-mode").setAttribute("aria-pressed", "true");
         nextQuestion();
       });
+      dimensionButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedDimension = button.dataset.dimension;
+          dimensionButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+          nextQuestion();
+        });
+      });
 
+      scoreLabel.textContent = String(score);
+      streakLabel.textContent = String(streak);
+      renderHistory();
       nextQuestion();
     })();
   </script>
